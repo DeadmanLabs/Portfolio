@@ -13,14 +13,17 @@ jobs:
     steps:
       - name: Trigger Deployment
         run: |
+          # Create payload
+          PAYLOAD='{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "repository": "${{ github.repository }}"}'
+
           # Calculate signature
-          SIGNATURE=$(echo -n "${{ github.event.head_commit.message }}" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_SECRET }}" | sed 's/^.* //')
+          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_SECRET }}" | sed 's/^.* //')
 
           # Trigger webhook (using HTTP since webhook is secured with HMAC signature)
           curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Deploy-Signature: sha256=$SIGNATURE" \
-            -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}' \
+            -d "$PAYLOAD" \
             http://mmagahey.com/webhook/deploy
 
       - name: Check Deployment Status
