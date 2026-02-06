@@ -16,12 +16,12 @@ jobs:
           # Calculate signature
           SIGNATURE=$(echo -n "${{ github.event.head_commit.message }}" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_SECRET }}" | sed 's/^.* //')
 
-          # Trigger webhook
+          # Trigger webhook (using HTTP since webhook is secured with HMAC signature)
           curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-Deploy-Signature: sha256=$SIGNATURE" \
             -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}' \
-            https://mmagahey.com/webhook/deploy
+            http://mmagahey.com/webhook/deploy
 
       - name: Check Deployment Status
         run: |
