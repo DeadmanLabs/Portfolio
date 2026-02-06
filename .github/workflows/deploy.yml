@@ -1,0 +1,30 @@
+name: Deploy Portfolio
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Deployment
+        run: |
+          # Calculate signature
+          SIGNATURE=$(echo -n "${{ github.event.head_commit.message }}" | openssl dgst -sha256 -hmac "${{ secrets.DEPLOY_SECRET }}" | sed 's/^.* //')
+
+          # Trigger webhook
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Deploy-Signature: sha256=$SIGNATURE" \
+            -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}' \
+            https://mmagahey.com/webhook/deploy
+
+      - name: Check Deployment Status
+        run: |
+          echo "Deployment triggered successfully!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref }}"
